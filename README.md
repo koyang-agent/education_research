@@ -47,6 +47,9 @@ python main.py --topic "원격 교육 환경에서 피드백 유형이 몰입도
                 --keywords "remote learning feedback type engagement"
 ```
 
+Groq 모델은 CrewAI의 LiteLLM 연동을 사용하므로 `requirements.txt`에서
+`crewai[litellm]`을 설치한다.
+
 ## 모델 라우팅
 
 - 자료 수집(단순 추출): `groq/llama-3.1-8b-instant` — 무료 한도 절약
