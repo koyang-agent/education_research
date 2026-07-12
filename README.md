@@ -41,7 +41,7 @@ research_agent_crewai/
 ```bash
 pip install -r requirements.txt
 cp .env.example .env
-# .env에 GROQ_API_KEY 입력 (학술 검색 API 키들은 선택)
+# .env에 APP_PASSWORD와 GROQ_API_KEY 입력 (학술 검색 API 키들은 선택)
 
 python main.py --topic "원격 교육 환경에서 피드백 유형이 몰입도에 미치는 영향" \
                 --keywords "remote learning feedback type engagement"
@@ -66,6 +66,10 @@ pip install -r requirements.txt
 cp .env.example .env   # .env에 GROQ_API_KEY 입력
 streamlit run app.py
 ```
+
+Streamlit Cloud에서는 앱을 Public으로 설정한 뒤 Secrets에 `APP_PASSWORD`를 등록하면
+이메일 초대 대신 앱 내부의 공유 비밀번호로 접속할 수 있습니다. 실제 비밀번호는 저장소에
+커밋하지 않습니다.
 
 ## 주의사항
 

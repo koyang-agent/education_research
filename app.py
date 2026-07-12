@@ -9,8 +9,10 @@
     자세한 절차는 README.md의 "클라우드 배포" 섹션 참고.
 """
 import json
+import hmac
 import os
 import re
+import time
 import uuid
 from datetime import datetime
 from html import escape
@@ -34,6 +36,7 @@ def _load_secret(key: str) -> str | None:
 # Streamlit Community Cloud / Hugging Face Spaces에서는 API 키를 st.secrets로 주입한다.
 # config.settings의 Settings(pydantic-settings)는 환경변수를 읽으므로, 여기서 미리 반영해둔다.
 for _key in (
+    "APP_PASSWORD",
     "GROQ_API_KEY",
     "OPENALEX_API_KEY",
     "SEMANTIC_SCHOLAR_API_KEY",
@@ -339,6 +342,50 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
+
+def _require_password() -> None:
+    """Streamlit 이메일 로그인 대신 앱 공용 비밀번호로 접근을 제한한다."""
+    if st.session_state.get("password_authenticated"):
+        return
+
+    st.markdown(
+        """
+        <div class="app-nav">
+            <div class="brand"><span class="brand-mark"></span> Education Research Desk</div>
+            <div class="status-pill"><span class="status-dot"></span>Private access</div>
+        </div>
+        <div class="eyebrow">Secure workspace</div>
+        <h1 class="hero-title">연구 공간에<br>접속합니다.</h1>
+        <p class="hero-copy">공유받은 비밀번호를 입력해주세요.</p>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    expected_password = os.environ.get("APP_PASSWORD", "")
+    if not expected_password:
+        st.error("APP_PASSWORD가 설정되지 않았습니다. Streamlit Secrets를 확인해주세요.")
+        st.stop()
+
+    with st.form("password_form", clear_on_submit=True):
+        entered_password = st.text_input(
+            "비밀번호",
+            type="password",
+            placeholder="비밀번호 입력",
+        )
+        submitted_password = st.form_submit_button("접속하기  →")
+
+    if submitted_password:
+        if hmac.compare_digest(entered_password, expected_password):
+            st.session_state["password_authenticated"] = True
+            st.rerun()
+        else:
+            time.sleep(1)
+            st.error("비밀번호가 올바르지 않습니다.")
+    st.stop()
+
+
+_require_password()
 
 try:
     from config.settings import settings
