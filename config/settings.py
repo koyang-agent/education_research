@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     # 모델 라우팅
     synthesis_model: str = "groq/llama-3.3-70b-versatile"  # 종합·검증용 (품질 우선)
     extraction_model: str = "groq/llama-3.1-8b-instant"  # 단순 추출·정리용 (무료 한도 절약)
+    extraction_max_tokens: int = 900
+    synthesis_max_tokens: int = 1800
+    llm_max_retries: int = 5
 
     output_dir: str = "outputs"
     max_papers_per_topic: int = 5

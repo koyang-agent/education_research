@@ -18,8 +18,18 @@ from src.tools.search_tool import get_web_search_tool
 
 
 def build_agents() -> dict[str, Agent]:
-    extraction_llm = LLM(model=settings.extraction_model, temperature=0.2)
-    synthesis_llm = LLM(model=settings.synthesis_model, temperature=0.3)
+    extraction_llm = LLM(
+        model=settings.extraction_model,
+        temperature=0.2,
+        max_tokens=settings.extraction_max_tokens,
+        max_retries=settings.llm_max_retries,
+    )
+    synthesis_llm = LLM(
+        model=settings.synthesis_model,
+        temperature=0.3,
+        max_tokens=settings.synthesis_max_tokens,
+        max_retries=settings.llm_max_retries,
+    )
 
     tools = [ArxivSearchTool()]
     web_tool = get_web_search_tool()
