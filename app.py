@@ -55,18 +55,19 @@ st.markdown(
     """
     <style>
     :root {
-        --canvas: #f7f8fa;
-        --surface: #ffffff;
-        --ink: #17181a;
-        --muted: #6d7178;
-        --line: #e6e8eb;
-        --accent: #5e6ad2;
-        --accent-dark: #4f5bc4;
+        --canvas: var(--background-color, #f7f8fa);
+        --surface: var(--secondary-background-color, #ffffff);
+        --ink: var(--text-color, #17181a);
+        --muted: color-mix(in srgb, var(--ink) 62%, transparent);
+        --line: color-mix(in srgb, var(--ink) 14%, transparent);
+        --accent: var(--primary-color, #5e6ad2);
+        --accent-dark: color-mix(in srgb, var(--accent) 82%, black);
+        --soft-accent: color-mix(in srgb, var(--accent) 12%, var(--canvas));
     }
 
     .stApp {
         background:
-            radial-gradient(circle at 50% -20%, rgba(94, 106, 210, 0.10), transparent 34rem),
+            radial-gradient(circle at 50% -20%, var(--soft-accent), transparent 34rem),
             var(--canvas);
         color: var(--ink);
     }
@@ -96,14 +97,14 @@ st.markdown(
     .brand-mark {
         background: var(--ink);
         border-radius: 4px;
-        box-shadow: inset 0 0 0 1px rgba(255,255,255,.16);
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--canvas) 20%, transparent);
         height: 18px;
         position: relative;
         width: 18px;
     }
 
     .brand-mark::after {
-        background: #ffffff;
+        background: var(--canvas);
         border-radius: 1px;
         content: "";
         height: 6px;
@@ -114,7 +115,7 @@ st.markdown(
     }
 
     .status-pill {
-        background: rgba(255,255,255,.7);
+        background: color-mix(in srgb, var(--surface) 82%, transparent);
         border: 1px solid var(--line);
         border-radius: 999px;
         color: var(--muted);
@@ -158,29 +159,31 @@ st.markdown(
     }
 
     [data-testid="stForm"] {
-        background: rgba(255,255,255,.9);
+        background: color-mix(in srgb, var(--surface) 94%, transparent);
         border: 1px solid var(--line);
         border-radius: 14px;
-        box-shadow: 0 1px 2px rgba(20, 24, 32, .03), 0 16px 40px rgba(20, 24, 32, .045);
+        box-shadow: 0 1px 2px color-mix(in srgb, var(--ink) 4%, transparent),
+                    0 16px 40px color-mix(in srgb, var(--ink) 6%, transparent);
         padding: 1.65rem 1.65rem 1.2rem;
     }
 
     [data-testid="stWidgetLabel"] p {
-        color: #383b40;
+        color: var(--ink);
         font-size: 0.78rem;
         font-weight: 620;
     }
 
     .stTextInput input {
-        background: #fbfbfc;
-        border: 1px solid #dcdee2;
+        background: var(--canvas);
+        border: 1px solid var(--line);
+        color: var(--ink);
         border-radius: 8px;
         min-height: 46px;
     }
 
     .stTextInput input:focus {
         border-color: var(--accent);
-        box-shadow: 0 0 0 3px rgba(94,106,210,.12);
+        box-shadow: 0 0 0 3px var(--soft-accent);
     }
 
     .stButton button, .stFormSubmitButton button, .stDownloadButton button {
@@ -200,22 +203,34 @@ st.markdown(
     .stFormSubmitButton button:hover {
         background: var(--accent-dark);
         border-color: var(--accent-dark);
-        box-shadow: 0 6px 18px rgba(94,106,210,.22);
+        box-shadow: 0 6px 18px color-mix(in srgb, var(--accent) 25%, transparent);
         color: white;
         transform: translateY(-1px);
     }
 
+    .stDownloadButton button {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        color: var(--ink);
+    }
+
+    .stDownloadButton button:hover {
+        background: color-mix(in srgb, var(--ink) 6%, var(--surface));
+        border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+        color: var(--ink);
+    }
+
     .workflow {
         align-items: center;
-        color: #8b8f96;
+        color: var(--muted);
         display: flex;
         font-size: 0.72rem;
         gap: 0.55rem;
         margin: 1.25rem 0 4rem;
     }
 
-    .workflow strong { color: #4b4f55; font-weight: 580; }
-    .workflow-line { background: #dfe1e5; height: 1px; width: 22px; }
+    .workflow strong { color: var(--ink); font-weight: 580; }
+    .workflow-line { background: var(--line); height: 1px; width: 22px; }
 
     .section-label {
         border-bottom: 1px solid var(--line);
@@ -230,7 +245,7 @@ st.markdown(
 
     .reference-card {
         align-items: flex-start;
-        background: rgba(255,255,255,.82);
+        background: color-mix(in srgb, var(--surface) 90%, transparent);
         border: 1px solid var(--line);
         border-radius: 11px;
         color: var(--ink) !important;
@@ -243,16 +258,16 @@ st.markdown(
     }
 
     .reference-card:hover {
-        border-color: #c9cce5;
-        box-shadow: 0 8px 24px rgba(20,24,32,.06);
+        border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+        box-shadow: 0 8px 24px color-mix(in srgb, var(--ink) 8%, transparent);
         transform: translateY(-1px);
     }
 
     .reference-index {
         align-items: center;
-        background: #f0f1f5;
+        background: color-mix(in srgb, var(--ink) 8%, var(--surface));
         border-radius: 6px;
-        color: #666b74;
+        color: var(--muted);
         display: flex;
         flex: 0 0 30px;
         font-size: .68rem;
@@ -261,9 +276,9 @@ st.markdown(
         justify-content: center;
     }
 
-    .reference-title { font-size: .9rem; font-weight: 620; line-height: 1.45; }
-    .reference-meta { color: var(--muted); font-size: .72rem; margin-top: .3rem; }
-    .reference-arrow { color: #9296a0; margin-left: auto; padding-top: .2rem; }
+    .reference-title { display: block; font-size: .9rem; font-weight: 620; line-height: 1.45; }
+    .reference-meta { color: var(--muted); display: block; font-size: .72rem; margin-top: .3rem; }
+    .reference-arrow { color: var(--muted); margin-left: auto; padding-top: .2rem; }
 
     .detail-back {
         color: var(--muted) !important;
@@ -298,7 +313,7 @@ st.markdown(
 
     .analysis-card.wide { grid-column: 1 / -1; }
     .analysis-label { color: var(--accent); font-size: .65rem; font-weight: 700; letter-spacing: .08em; margin-bottom: .55rem; text-transform: uppercase; }
-    .analysis-text { color: #3d4147; font-size: .84rem; line-height: 1.65; }
+    .analysis-text { color: var(--ink); font-size: .84rem; line-height: 1.65; }
 
     [data-testid="stMarkdownContainer"] h1,
     [data-testid="stMarkdownContainer"] h2,
