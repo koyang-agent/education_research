@@ -387,7 +387,10 @@ def _render_reference_detail(run_id: str, reference_index: int) -> None:
         st.stop()
 
     _render_nav()
-    st.markdown('<a class="detail-back" href="./">← 새 연구 시작</a>', unsafe_allow_html=True)
+    st.markdown(
+        f'<a class="detail-back" href="?run={quote(run_id)}">← 연구 결과로 돌아가기</a>',
+        unsafe_allow_html=True,
+    )
     st.markdown('<div class="eyebrow">Reference analysis</div>', unsafe_allow_html=True)
     st.markdown(f'<h1 class="detail-title">{escape(reference["title"])}</h1>', unsafe_allow_html=True)
     st.markdown(
@@ -411,6 +414,46 @@ def _render_reference_detail(run_id: str, reference_index: int) -> None:
     st.caption("분석 내용은 검색 시 확보한 초록을 기준으로 작성되며, 원문 전체의 내용과 다를 수 있습니다.")
 
 
+def _render_saved_result(run_id: str) -> None:
+    """저장된 실행의 보고서와 참고문헌 목록을 복원한다."""
+    try:
+        payload = json.loads(_result_path(run_id).read_text(encoding="utf-8"))
+        references = payload["references"]
+    except (ValueError, OSError, KeyError, json.JSONDecodeError):
+        st.error("연구 결과를 찾을 수 없습니다. 새 연구를 시작해주세요.")
+        st.stop()
+
+    _render_nav()
+    st.markdown('<a class="detail-back" href="./">← 새 연구 시작</a>', unsafe_allow_html=True)
+    st.markdown('<div class="eyebrow">Research result</div>', unsafe_allow_html=True)
+    st.markdown(
+        f'<h1 class="detail-title">{escape(payload["topic"])}</h1>',
+        unsafe_allow_html=True,
+    )
+    report_tab, references_tab = st.tabs(["보고서", f"참고문헌  {len(references)}"])
+    with report_tab:
+        st.markdown('<div class="section-label">Research report</div>', unsafe_allow_html=True)
+        st.markdown(payload["report"])
+    with references_tab:
+        st.markdown('<div class="section-label">Reference library</div>', unsafe_allow_html=True)
+        for index, reference in enumerate(references):
+            detail_url = f"?run={quote(run_id)}&reference={index}"
+            st.markdown(
+                f'<a class="reference-card" href="{detail_url}" target="_blank">'
+                f'<span class="reference-index">{index + 1:02d}</span>'
+                f'<span><span class="reference-title">{escape(reference["title"])}</span>'
+                f'<span class="reference-meta">{escape(reference["published"])} · 상세 분석 보기</span></span>'
+                f'<span class="reference-arrow">↗</span></a>',
+                unsafe_allow_html=True,
+            )
+    st.download_button(
+        "보고서 내려받기  ↓",
+        data=f'# {payload["topic"]}\n\n{payload["report"]}',
+        file_name=f"research_summary_{run_id}.md",
+        mime="text/markdown",
+    )
+
+
 run_param = st.query_params.get("run")
 reference_param = st.query_params.get("reference")
 if run_param and reference_param is not None:
@@ -418,6 +461,9 @@ if run_param and reference_param is not None:
         _render_reference_detail(str(run_param), int(reference_param))
     except ValueError:
         st.error("잘못된 참고문헌 링크입니다.")
+    st.stop()
+if run_param:
+    _render_saved_result(str(run_param))
     st.stop()
 
 _render_nav()
