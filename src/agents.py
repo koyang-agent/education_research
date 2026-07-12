@@ -13,8 +13,7 @@ _crewai_cache.mark_cache_breakpoint = lambda message: message
 from crewai import Agent, LLM
 
 from config.settings import settings
-from src.tools.arxiv_tool import ArxivSearchTool
-from src.tools.search_tool import get_web_search_tool
+from src.tools.openalex_tool import EducationLiteratureSearchTool
 
 
 def build_agents() -> dict[str, Agent]:
@@ -31,18 +30,16 @@ def build_agents() -> dict[str, Agent]:
         max_retries=settings.llm_max_retries,
     )
 
-    tools = [ArxivSearchTool()]
-    web_tool = get_web_search_tool()
-    if web_tool:
-        tools.append(web_tool)
+    tools = [EducationLiteratureSearchTool()]
 
     literature_agent = Agent(
         role="교육학 문헌 조사관",
-        goal="주어진 연구 주제에 대해 신뢰할 수 있는 최신 학술 자료를 폭넓게 수집한다",
+        goal="주어진 연구 주제와 직접 관련된 교육학 분야의 신뢰할 수 있는 학술 자료를 수집한다",
         backstory=(
             "당신은 교육학 분야의 체계적 문헌고찰(Systematic Review) 경험이 풍부한 "
             "리서치 라이브러리언입니다. 관련성이 낮은 자료는 걸러내고, 방법론과 핵심 결과가 "
-            "명확한 자료를 우선적으로 선별합니다."
+            "명확한 자료를 우선적으로 선별합니다. Education으로 분류되지 않은 자료를 임의로 "
+            "추가하지 않습니다."
         ),
         tools=tools,
         llm=extraction_llm,

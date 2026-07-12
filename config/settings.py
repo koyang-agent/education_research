@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     groq_api_key: str
-    serper_api_key: str | None = None
+    openalex_api_key: str | None = None
 
     # 모델 라우팅
     synthesis_model: str = "groq/llama-3.3-70b-versatile"  # 종합·검증용 (품질 우선)

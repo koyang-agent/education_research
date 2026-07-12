@@ -33,7 +33,7 @@ def _load_secret(key: str) -> str | None:
 
 # Streamlit Community Cloud / Hugging Face Spaces에서는 API 키를 st.secrets로 주입한다.
 # config.settings의 Settings(pydantic-settings)는 환경변수를 읽으므로, 여기서 미리 반영해둔다.
-for _key in ("GROQ_API_KEY", "SERPER_API_KEY"):
+for _key in ("GROQ_API_KEY", "OPENALEX_API_KEY"):
     _value = _load_secret(_key)
     if _value and not os.environ.get(_key):
         os.environ[_key] = str(_value)
@@ -435,7 +435,7 @@ with st.form("research_form"):
     keywords = st.text_input(
         "영문 검색어",
         placeholder="예: remote learning feedback type engagement",
-        help="논문 검색(arXiv 등)에 사용할 영문 핵심 단어를 입력하세요.",
+        help="OpenAlex의 Education 분야 논문 검색에 사용할 영문 핵심 단어를 입력하세요.",
     )
     submitted = st.form_submit_button("문헌 조사 시작  →")
 
