@@ -13,7 +13,6 @@ _crewai_cache.mark_cache_breakpoint = lambda message: message
 from crewai import Agent, LLM
 
 from config.settings import settings
-from src.tools.openalex_tool import EducationLiteratureSearchTool
 
 
 def build_agents() -> dict[str, Agent]:
@@ -30,8 +29,6 @@ def build_agents() -> dict[str, Agent]:
         max_retries=settings.llm_max_retries,
     )
 
-    tools = [EducationLiteratureSearchTool()]
-
     literature_agent = Agent(
         role="교육학 문헌 조사관",
         goal="주어진 연구 주제와 직접 관련된 교육학 분야의 신뢰할 수 있는 학술 자료를 수집한다",
@@ -41,7 +38,6 @@ def build_agents() -> dict[str, Agent]:
             "명확한 자료를 우선적으로 선별합니다. Education으로 분류되지 않은 자료를 임의로 "
             "추가하지 않습니다."
         ),
-        tools=tools,
         llm=extraction_llm,
         verbose=True,
     )

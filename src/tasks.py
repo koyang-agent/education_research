@@ -6,16 +6,15 @@ Task 정의. process_pipeline.md의 Step 2~4를 Sequential Task로 매핑한다.
 """
 from crewai import Agent, Task
 
-from config.settings import settings
-
-
-def build_tasks(agents: dict[str, Agent], topic: str, keywords: str) -> list[Task]:
+def build_tasks(
+    agents: dict[str, Agent], topic: str, keywords: str, verified_sources: str
+) -> list[Task]:
     retrieval_task = Task(
         description=(
             f"연구 주제: '{topic}'\n"
             f"핵심 키워드: {keywords}\n\n"
-            f"education_literature_search 도구를 사용해 Education 하위 분야로 분류된 관련 논문을 "
-            f"최대 {settings.max_papers_per_topic}편 찾아라. 각 자료에서 제목, URL, 발행일, "
+            "아래 '검증된 OpenAlex 검색 결과'만 사용하라. 새 자료를 검색하거나 제목, URL, "
+            "저자 정보를 만들지 마라. 각 자료에서 제목, URL, 발행일, "
             "핵심 초록(Abstract)/요지를 추출해 목록으로 정리하라. 초록에 명시된 범위 안에서 "
             "방법론과 주요 발견을 요약하고, 이 연구 주제와의 관련성을 한 문장으로 분석하라. "
             "정보가 초록에 없으면 추측하지 말고 '초록에서 확인되지 않음'이라고 작성하라.\n\n"
@@ -31,6 +30,7 @@ def build_tasks(agents: dict[str, Agent], topic: str, keywords: str) -> list[Tas
             "FINDINGS: 주요 발견\n"
             "RELEVANCE: 현재 연구 주제와의 관련성\n"
             "REFERENCE_END"
+            f"\n\n검증된 OpenAlex 검색 결과:\n{verified_sources}"
         ),
         expected_output=(
             "각 자료가 REFERENCE_START와 REFERENCE_END 사이에 지정된 7개 필드를 모두 포함한 목록. "
@@ -69,7 +69,7 @@ def build_tasks(agents: dict[str, Agent], topic: str, keywords: str) -> list[Tas
         ),
         expected_output="검증 및 필요시 수정을 거친 최종 마크다운 보고서 전체.",
         agent=agents["quality"],
-        context=[analysis_task],
+        context=[retrieval_task, analysis_task],
     )
 
     return [retrieval_task, analysis_task, quality_task]

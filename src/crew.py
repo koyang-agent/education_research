@@ -8,6 +8,7 @@ from crewai import Crew, Process
 from src.agents import build_agents
 from src.result import Reference, ResearchResult
 from src.tasks import build_tasks
+from src.tools.openalex_tool import format_literature_for_llm, search_education_literature
 
 
 _REFERENCE_FIELDS = (
@@ -21,9 +22,9 @@ _REFERENCE_FIELDS = (
 )
 
 
-def _parse_references(raw: str) -> list[Reference]:
+def _parse_references(raw: str, records: list[dict]) -> list[Reference]:
     """문헌 조사 에이전트의 구분자 기반 출력을 참고문헌 객체로 변환한다."""
-    references: list[Reference] = []
+    analyses: dict[str, dict[str, str]] = {}
     for block in raw.split("REFERENCE_START")[1:]:
         block = block.split("REFERENCE_END", 1)[0]
         values: dict[str, str] = {}
@@ -37,25 +38,40 @@ def _parse_references(raw: str) -> list[Reference]:
             values[field] = match.group(1).strip() if match else ""
 
         url = values["URL"].strip("<> ")
-        if values["TITLE"] and url.startswith(("http://", "https://")):
-            references.append(
-                Reference(
-                    title=values["TITLE"],
-                    url=url,
-                    published=values["PUBLISHED"] or "발행일 정보 없음",
-                    summary=values["SUMMARY"] or "요약 정보 없음",
-                    methodology=values["METHODOLOGY"] or "초록에서 확인되지 않음",
-                    findings=values["FINDINGS"] or "초록에서 확인되지 않음",
-                    relevance=values["RELEVANCE"] or "연구 주제와의 관련성 분석 없음",
-                )
-            )
-    return references
+        if url:
+            analyses[url] = values
+
+    return [
+        Reference(
+            title=record["title"],
+            url=record["url"],
+            published=record["published"],
+            summary=record["abstract"],
+            methodology=analyses.get(record["url"], {}).get("METHODOLOGY")
+            or "초록에서 확인되지 않음",
+            findings=analyses.get(record["url"], {}).get("FINDINGS")
+            or "초록에서 확인되지 않음",
+            relevance=analyses.get(record["url"], {}).get("RELEVANCE")
+            or "연구 주제와의 관련성 분석 없음",
+        )
+        for record in records
+    ]
 
 
 def run_research(topic: str, keywords: str) -> ResearchResult:
     """파이프라인을 실행하고 보고서와 구조화된 참고문헌을 반환한다."""
+    records = search_education_literature(keywords, settings.max_papers_per_topic)
+    if not records:
+        return ResearchResult(
+            report=(
+                "## 검색 결과 없음\n\n입력한 영문 검색어와 일치하는 Education 분야 저널 논문을 "
+                "OpenAlex에서 찾지 못했습니다. 더 일반적인 영문 키워드로 다시 시도해주세요."
+            ),
+            references=[],
+        )
+
     agents = build_agents()
-    tasks = build_tasks(agents, topic, keywords)
+    tasks = build_tasks(agents, topic, keywords, format_literature_for_llm(records))
 
     crew = Crew(
         agents=[agents["literature"], agents["summarizer"], agents["quality"]],
@@ -69,5 +85,5 @@ def run_research(topic: str, keywords: str) -> ResearchResult:
     retrieval_raw = str(task_outputs[0].raw) if task_outputs else ""
     return ResearchResult(
         report=str(result),
-        references=_parse_references(retrieval_raw),
+        references=_parse_references(retrieval_raw, records),
     )

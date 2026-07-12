@@ -1,15 +1,8 @@
-"""OpenAlex의 Education 하위 분야로 제한된 학술 논문 검색 도구."""
+"""OpenAlex의 Education 하위 분야로 제한된 결정론적 논문 검색."""
 import os
 
 import requests
-from crewai.tools import BaseTool
-from pydantic import BaseModel, Field
 from tenacity import retry, stop_after_attempt, wait_fixed
-
-
-class EducationLiteratureSearchInput(BaseModel):
-    query: str = Field(..., description="교육학 논문을 찾기 위한 영문 검색어")
-    max_results: int = Field(5, ge=1, le=10, description="가져올 논문 개수")
 
 
 def _restore_abstract(inverted_index: dict[str, list[int]] | None) -> str:
@@ -24,61 +17,71 @@ def _restore_abstract(inverted_index: dict[str, list[int]] | None) -> str:
     return " ".join(words)
 
 
-class EducationLiteratureSearchTool(BaseTool):
-    name: str = "education_literature_search"
-    description: str = (
-        "OpenAlex에서 주 분류가 Education인 저널 논문만 검색한다. "
-        "교육학 하위 분야 필터가 API 수준에서 강제되며 제목, 저자, 저널, 초록, DOI, "
-        "발행일, 교육학 세부 주제와 인용 수를 반환한다."
-    )
-    args_schema: type[BaseModel] = EducationLiteratureSearchInput
+@retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
+def search_education_literature(query: str, max_results: int = 5) -> list[dict]:
+    """LLM을 거치지 않고 OpenAlex가 실제 반환한 Education 논문만 가져온다."""
+    max_results = max(1, min(max_results, 10))
+    params = {
+        "search": query,
+        "filter": "primary_topic.subfield.id:3304,type:article",
+        "sort": "relevance_score:desc",
+        "per-page": max_results,
+        "select": (
+            "id,doi,title,publication_date,authorships,primary_location,"
+            "abstract_inverted_index,primary_topic,cited_by_count"
+        ),
+    }
+    api_key = os.getenv("OPENALEX_API_KEY")
+    if api_key:
+        params["api_key"] = api_key
 
-    @retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
-    def _run(self, query: str, max_results: int = 5) -> str:
-        params = {
-            "search": query,
-            "filter": "primary_topic.subfield.id:3304,type:article",
-            "sort": "relevance_score:desc",
-            "per-page": max_results,
-            "select": (
-                "id,doi,title,publication_date,authorships,primary_location,"
-                "abstract_inverted_index,primary_topic,cited_by_count"
-            ),
-        }
-        api_key = os.getenv("OPENALEX_API_KEY")
-        if api_key:
-            params["api_key"] = api_key
+    response = requests.get("https://api.openalex.org/works", params=params, timeout=20)
+    response.raise_for_status()
+    records: list[dict] = []
+    for work in response.json().get("results", []):
+        location = work.get("primary_location") or {}
+        source = location.get("source") or {}
+        topic = work.get("primary_topic") or {}
+        url = work.get("doi") or work.get("id", "")
+        title = work.get("title") or ""
+        if not title or not url.startswith(("https://doi.org/", "https://openalex.org/")):
+            continue
+        authors = [
+            item.get("author", {}).get("display_name", "")
+            for item in work.get("authorships", [])[:5]
+        ]
+        records.append(
+            {
+                "title": title,
+                "url": url,
+                "published": work.get("publication_date") or "정보 없음",
+                "authors": ", ".join(author for author in authors if author) or "정보 없음",
+                "journal": source.get("display_name") or "정보 없음",
+                "education_topic": topic.get("display_name") or "Education",
+                "citations": work.get("cited_by_count", 0),
+                "abstract": _restore_abstract(work.get("abstract_inverted_index"))[:700],
+            }
+        )
+    return records
 
-        response = requests.get("https://api.openalex.org/works", params=params, timeout=20)
-        response.raise_for_status()
-        works = response.json().get("results", [])
-        if not works:
-            return "Education 분야에서 일치하는 저널 논문을 찾지 못했습니다."
 
-        results: list[str] = []
-        for work in works:
-            location = work.get("primary_location") or {}
-            source = location.get("source") or {}
-            topic = work.get("primary_topic") or {}
-            authors = [
-                item.get("author", {}).get("display_name", "")
-                for item in work.get("authorships", [])[:5]
-            ]
-            authors = [author for author in authors if author]
-            url = work.get("doi") or location.get("landing_page_url") or work.get("id", "")
-            abstract = _restore_abstract(work.get("abstract_inverted_index"))[:700]
-            results.append(
-                "\n".join(
-                    [
-                        f"- 제목: {work.get('title', '제목 없음')}",
-                        f"  URL: {url}",
-                        f"  발행일: {work.get('publication_date') or '정보 없음'}",
-                        f"  저자: {', '.join(authors) or '정보 없음'}",
-                        f"  저널: {source.get('display_name') or '정보 없음'}",
-                        f"  교육학 세부 주제: {topic.get('display_name') or 'Education'}",
-                        f"  인용 수: {work.get('cited_by_count', 0)}",
-                        f"  초록: {abstract}",
-                    ]
-                )
+def format_literature_for_llm(records: list[dict]) -> str:
+    """검증된 API 레코드를 LLM이 분석하기 쉬운 읽기 전용 목록으로 만든다."""
+    results: list[str] = []
+    for index, record in enumerate(records, start=1):
+        results.append(
+            "\n".join(
+                [
+                    f"[검증된 논문 {index}]",
+                    f"제목: {record['title']}",
+                    f"URL: {record['url']}",
+                    f"발행일: {record['published']}",
+                    f"저자: {record['authors']}",
+                    f"저널: {record['journal']}",
+                    f"교육학 세부 주제: {record['education_topic']}",
+                    f"인용 수: {record['citations']}",
+                    f"초록: {record['abstract']}",
+                ]
             )
-        return "\n\n".join(results)
+        )
+    return "\n\n".join(results)
