@@ -16,11 +16,23 @@ def build_tasks(agents: dict[str, Agent], topic: str, keywords: str) -> list[Tas
             f"핵심 키워드: {keywords}\n\n"
             f"arxiv_search 도구(및 웹서치 도구가 있다면 함께)를 사용해 관련 최신 논문·자료를 "
             f"최대 {settings.max_papers_per_topic}편 찾아라. 각 자료에서 제목, URL, 발행일, "
-            "핵심 초록(Abstract)/요지를 추출해 목록으로 정리하라."
+            "핵심 초록(Abstract)/요지를 추출해 목록으로 정리하라. 초록에 명시된 범위 안에서 "
+            "방법론과 주요 발견을 요약하고, 이 연구 주제와의 관련성을 한 문장으로 분석하라. "
+            "정보가 초록에 없으면 추측하지 말고 '초록에서 확인되지 않음'이라고 작성하라.\n\n"
+            "반드시 각 자료를 아래 형식으로 출력하라. 필드명과 구분자는 바꾸지 마라.\n"
+            "REFERENCE_START\n"
+            "TITLE: 논문 제목\n"
+            "URL: https://...\n"
+            "PUBLISHED: YYYY-MM-DD\n"
+            "SUMMARY: 초록 핵심 요약\n"
+            "METHODOLOGY: 연구 방법론\n"
+            "FINDINGS: 주요 발견\n"
+            "RELEVANCE: 현재 연구 주제와의 관련성\n"
+            "REFERENCE_END"
         ),
         expected_output=(
-            "각 자료가 '제목 / URL / 발행일 / 초록 요약' 형식으로 정리된 목록. "
-            "관련성이 낮은 자료는 제외."
+            "각 자료가 REFERENCE_START와 REFERENCE_END 사이에 지정된 7개 필드를 모두 포함한 목록. "
+            "관련성이 낮은 자료는 제외하고 URL은 원문 주소를 그대로 유지."
         ),
         agent=agents["literature"],
     )
