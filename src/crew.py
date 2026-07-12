@@ -8,7 +8,8 @@ from crewai import Crew, Process
 from src.agents import build_agents
 from src.result import Reference, ResearchResult
 from src.tasks import build_tasks
-from src.tools.openalex_tool import format_literature_for_llm, search_education_literature
+from src.tools.academic_sources import search_all_sources
+from src.tools.openalex_tool import format_literature_for_llm
 
 
 _REFERENCE_FIELDS = (
@@ -58,14 +59,17 @@ def _parse_references(raw: str, records: list[dict]) -> list[Reference]:
     ]
 
 
-def run_research(topic: str, keywords: str) -> ResearchResult:
+def run_research(topic: str, keywords: str, korean_keywords: str = "") -> ResearchResult:
     """파이프라인을 실행하고 보고서와 구조화된 참고문헌을 반환한다."""
-    records = search_education_literature(keywords, settings.max_papers_per_topic)
+    records = search_all_sources(
+        keywords, korean_keywords or topic, settings.max_papers_per_topic
+    )
     if not records:
         return ResearchResult(
             report=(
                 "## 검색 결과 없음\n\n입력한 영문 검색어와 일치하는 Education 분야 저널 논문을 "
-                "OpenAlex에서 찾지 못했습니다. 더 일반적인 영문 키워드로 다시 시도해주세요."
+                "연동된 교육학 데이터베이스에서 찾지 못했습니다. 영문·한글 키워드를 더 "
+                "일반적인 표현으로 바꾸거나 추가 API 키 설정을 확인해주세요."
             ),
             references=[],
         )

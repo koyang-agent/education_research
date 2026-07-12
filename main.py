@@ -30,10 +30,15 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="교육학 자동 연구 에이전트 (CrewAI 기반)")
     parser.add_argument("--topic", required=True, help="연구 주제 (한글)")
     parser.add_argument("--keywords", required=True, help="검색용 영문 핵심 키워드")
+    parser.add_argument("--korean-keywords", default="", help="국내 논문 검색용 한글 키워드")
     args = parser.parse_args()
 
     print(f"=== 리서치 시작: {args.topic} ===")
-    report = run_research(topic=args.topic, keywords=args.keywords)
+    report = run_research(
+        topic=args.topic,
+        keywords=args.keywords,
+        korean_keywords=args.korean_keywords,
+    )
 
     path = save_output(args.topic, report)
     print(f"\n=== 완료: 보고서 저장 위치 -> {path} ===")

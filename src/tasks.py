@@ -13,7 +13,7 @@ def build_tasks(
         description=(
             f"연구 주제: '{topic}'\n"
             f"핵심 키워드: {keywords}\n\n"
-            "아래 '검증된 OpenAlex 검색 결과'만 사용하라. 새 자료를 검색하거나 제목, URL, "
+            "아래 '검증된 학술 API 검색 결과'만 사용하라. 새 자료를 검색하거나 제목, URL, "
             "저자 정보를 만들지 마라. 각 자료에서 제목, URL, 발행일, "
             "핵심 초록(Abstract)/요지를 추출해 목록으로 정리하라. 초록에 명시된 범위 안에서 "
             "방법론과 주요 발견을 요약하고, 이 연구 주제와의 관련성을 한 문장으로 분석하라. "
@@ -30,7 +30,7 @@ def build_tasks(
             "FINDINGS: 주요 발견\n"
             "RELEVANCE: 현재 연구 주제와의 관련성\n"
             "REFERENCE_END"
-            f"\n\n검증된 OpenAlex 검색 결과:\n{verified_sources}"
+            f"\n\n검증된 학술 API 검색 결과:\n{verified_sources}"
         ),
         expected_output=(
             "각 자료가 REFERENCE_START와 REFERENCE_END 사이에 지정된 7개 필드를 모두 포함한 목록. "

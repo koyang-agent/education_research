@@ -13,7 +13,8 @@ research_agent_crewai/
 │   └── settings.py         # pydantic-settings 기반 환경설정 (API 키, 모델 라우팅)
 ├── src/
 │   ├── tools/
-│   │   └── openalex_tool.py  # Education 분야로 제한된 OpenAlex 논문 검색
+│   │   ├── academic_sources.py # ERIC/OpenAlex/Semantic Scholar/CORE/KCI 통합
+│   │   └── openalex_tool.py    # Education 분야로 제한된 OpenAlex 검색
 │   ├── agents.py            # 문헌 조사관 / 학술 분석가 / 품질 검증관
 │   ├── tasks.py              # Retrieval -> Analysis -> Quality Check
 │   └── crew.py               # Sequential Process로 Crew 조립 및 실행
@@ -40,7 +41,7 @@ research_agent_crewai/
 ```bash
 pip install -r requirements.txt
 cp .env.example .env
-# .env에 GROQ_API_KEY 입력 (OPENALEX_API_KEY는 선택)
+# .env에 GROQ_API_KEY 입력 (학술 검색 API 키들은 선택)
 
 python main.py --topic "원격 교육 환경에서 피드백 유형이 몰입도에 미치는 영향" \
                 --keywords "remote learning feedback type engagement"
@@ -70,5 +71,7 @@ streamlit run app.py
 
 - CrewAI는 내부적으로 LLM 호출이 많아(에이전트 3개 × Task마다 여러 번) 순수 API 직접 호출 방식보다
   토큰 비용이 더 발생합니다. 비용이 걱정되면 먼저 `max_papers_per_topic`을 낮춰 테스트하세요.
-- 문헌 검색은 OpenAlex에서 주 분류가 `Education`인 저널 논문으로 제한합니다. 검색 결과가 적어도 다른 분야나 arXiv 자료로 자동 보충하지 않습니다.
+- 해외 문헌은 ERIC을 기본으로 검색합니다. 키가 있으면 Education 분야로 제한한 OpenAlex,
+  Semantic Scholar, CORE 결과를 추가합니다. 국내 문헌은 `KCI_API_KEY`가 있을 때 한글로 검색합니다.
+- RISS API는 공식 정책상 비영리 기관·대학 대상이므로 개인 배포에는 연결하지 않습니다.
 - `verbose=True`로 되어 있어 실행 중 에이전트의 사고 과정이 콘솔에 출력됩니다. 프로덕션에서는 끄는 것을 권장합니다.

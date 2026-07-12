@@ -10,6 +10,9 @@ class Settings(BaseSettings):
 
     groq_api_key: str
     openalex_api_key: str | None = None
+    semantic_scholar_api_key: str | None = None
+    core_api_key: str | None = None
+    kci_api_key: str | None = None
 
     # 모델 라우팅
     synthesis_model: str = "groq/llama-3.3-70b-versatile"  # 종합·검증용 (품질 우선)

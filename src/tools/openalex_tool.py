@@ -73,6 +73,7 @@ def format_literature_for_llm(records: list[dict]) -> str:
             "\n".join(
                 [
                     f"[검증된 논문 {index}]",
+                    f"출처: {record.get('source', 'OpenAlex')}",
                     f"제목: {record['title']}",
                     f"URL: {record['url']}",
                     f"발행일: {record['published']}",
