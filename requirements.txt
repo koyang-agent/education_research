@@ -1,5 +1,6 @@
 crewai[litellm]>=0.98.0
 crewai-tools>=0.32.0
+fastapi>=0.115.0
 pydantic-settings>=2.6.1
 requests>=2.31.0
 tenacity>=8.2.3
