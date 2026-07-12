@@ -5,6 +5,7 @@ import re
 
 from crewai import Crew, Process
 
+from config.settings import settings
 from src.agents import build_agents
 from src.result import Reference, ResearchResult
 from src.tasks import build_tasks
