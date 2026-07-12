@@ -4,6 +4,12 @@ Agent 정의.
 - Summarizer Agent: 교육학 이론과 매핑, 공통점/차이점/한계 분석
 - Quality Reviewer Agent: Self-Correction (환각·논리 비약·톤앤매너 검증)
 """
+import crewai.llms.cache as _crewai_cache
+
+# CrewAI 1.14.x는 비-Anthropic 공급자에도 Anthropic 전용
+# cache_breakpoint를 추가한다. Groq는 이 필드를 거부하므로 비활성화한다.
+_crewai_cache.mark_cache_breakpoint = lambda message: message
+
 from crewai import Agent, LLM
 
 from config.settings import settings
